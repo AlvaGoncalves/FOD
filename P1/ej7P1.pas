@@ -40,25 +40,18 @@ begin
 	end;	
 end;
 
-procedure cargarTxt(var t:text);
+procedure cargarBin(var a:archivo);
 var
 	n:novela;
+	t:text;
+	no:string;
 begin
-	leer(n);
-	while(n.cod <> -1)do begin
-		writeln(t, n.cod,'',n.precio,'',n.gen);
-		writeln(t,n.nom);
-		leer(n);
-	end;
-	close(t);
-end;
-
-
-procedure cargarBin(var a:archivo; var t:text);
-var
-	n:novela;
-begin
+	writeln('Ingrese nombre del archivo bin:');
+	readln(no);
+	assign(a,no);
 	rewrite(a);
+	
+	assign(t,'novelas.txt');
 	reset(t);
 	while(not eof(t))do begin
 		readln(t,n.cod,n.precio,n.gen);
@@ -106,16 +99,9 @@ end;
 
 VAR
 	a:archivo;
-	n : String;
-	t:text;
 	x: integer;
 BEGIN
-	writeln('Ingrese el nom del archivo a crear:');
-	readln(n);
-	assign(a,n);
-	assign(t,'C:\Users\alva_\OneDrive\Escritorio\facu\FOD\P1\novelas.txt');
-	cargarTxt(t);
-	cargarBin(a,t);
+	cargarBin(a);
 	
 	menu(x);
 	if(x = 1)then
