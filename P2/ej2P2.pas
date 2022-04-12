@@ -38,31 +38,77 @@ type
 	
 	materia = record
 		cod : integer;
-		conF : integer;
-		sinF : integer;
+		conF : boolean;
+		sinF : boolean;
 	end;
 	
 	detalle = file of materia; //el detalle siempre es del registro que actualiza al maestro
 	maestro = file of alumno; 	
  
  
-procedure actualizarM(var m:maestro; var d:detalle);
-var
-	regD : materia;
-	regM : alumno;
+procedure LeerD(var d:detalle; var mat:materia);
 begin
-	leer(d);
-	while(not eof(d))do begin	
-		read(d,r);
-		if(r.)then
-
-
+	if(not eof(d))then
+		read(d,mat)
+	else	
+		mat.cod := tope;
 end; 
  
+ procedure actualizarM(var m:maestro; var d:detalle);
+ var
+	regD : materia;
+	regM : alumno;
+ begin
+		rewrite(m);
+		reset(d);
+		leerD(d, regD);
+		while(regD.cod <> tope)do begin //mientras no llegue al valor alto (no utilizo eof pq puede haber varios detalles que modifiquen este maestro)
+			read(m, regM); //leo del maestro
+			while(regM.cod <> regD.cod)do //si el cod es dif, leo cambio de maestro
+				read(m, regM);
+			while(regM.cod = regD.cod)do begin//corte de control donde actualizo el maestro
+					if(regD.conF = true)then
+						regM.conF := regM.conF + 1;	//acutalizo el maestro
+					if(regD.sinF = true)then
+						regM.sinF := regM.sinF + 1;
+								
+					leerD(d, regD);	//vuelvo a leer del detalle
+			end;
+			seek(m, filepos(m)-1);//busco la ultima pos en el maestro
+			write(m, regM);//escribo el registro en esa pos
+		end;
+		close(m);
+		close(d);
+end;
+
+procedure Exportar(var m:maestro; var t:text);
+var
+	aux : alumno;
+begin
+	reset(m);
+	rewrite(t);
+	while(not eof(m))do begin 
+		read(m, aux);
+		write(t, aux.cod,'',aux.ape,'',aux.nom,'',aux.sinF,'',aux.conF);
+	end;
+	close(m);
+	close(t);
+end;					
+ 
 VAR
-
+	m:maestro;
+	d:detalle;
+	t: Text;
+	mae, det : cadena;
 BEGIN
-	actualzarM();
+	writeln('Ingrese el nombre para el arch maestro: ');
+	readln(mae);
+	writeln('Ingrese el nombre para el arch detalle: ');
+	readln(det);
 	
+	assign(m, mae);
+	assign(d, det);
+	assign(t, 'A_TEXT');
+	actualizarM(m, d);
+	Exportar(m, t);
 END.
-
