@@ -13,6 +13,8 @@
 	puede venir 0 o N registros de un determinado producto.
 }
 
+//donde va el merge --> pp o modulo, dentro del actualizarM?
+
 program ej3P2;
 const
 	tope = 9999;
