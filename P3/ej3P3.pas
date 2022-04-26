@@ -19,8 +19,7 @@
 		
 		i. Dar de alta una novela leyendo la información desde teclado. Para
 		esta operación, en caso de ser posible, deberá recuperarse el
-		espacio libre. Es decir, si en el campo correspondiente al código de
-		novela del registro cabecera hay un valor negativo, por ejemplo -5,
+		espacio libre. Es decir, si en el campo coro -5,
 		se debe leer el registro en la posición 5, copiarlo en la posición 0
 		(actualizar la lista de espacio libre) y grabar el nuevo registro en la
 		posición 5. Con el valor 0 (cero) en el registro cabecera se indica
@@ -47,6 +46,7 @@ program ej3P3;
 const
 	tope = 9999;
 type
+	cadena = string[20];
 	
 	novela = record
 		cod : integer;
@@ -85,59 +85,155 @@ var
 	n : novela;
 begin
 	//Cabecera
-	n.cod := 0; //me importan los demas campos? Supongo que no!	
+	n.cod := 0; //no me importan los demas campos	
 	write(a, n);
 	//Carga normal 
 	leer(n);
-	while(n.cod <> tope )do begin
-		if(n.cod <> 0)then begin
-			write(a, n);
-			leer(n)
-		else
-			P :=  filepos(a); //guardo la posición como negativo (como se hacia lo de negativo?)
+	while(n.cod <> tope)do begin
+		//if(n.cod <> 0)then begin
+		write(a, n);
+		leer(n)
+		{else
+			P :=  filepos(a)*-1; //guardo la posición como negativo
 			seek(a, 0);	//siempre salto a 0
+		}
 	end;	
 	close(a);
 end;
 
+procedure agregar(var a:arch; n:novela);
+var
+	aux:novela;
+	P:integer;
+begin
+	reset(a);
+	read(a, n);
+	if(n.cod <> 0)then begin
+		P := n.cod*(-1);//tomo la pos sin el negativo
+		seek(a, P);//me paro en la pos del archivo que no va
+		read(a, aux);//copio la cabecera de esa pos
+		write(a,n);//escribo el dato a agregar
+		seek(a, 0);//me posiciono al inicio del archivo
+		write(a,aux);//Reescribo la cabecera(actualizo)
+	end
+	else
+		writeln('!!!!!!!El archivo no cuenta con lugar para agregar registros!!!!!!!!');
+	close(a);	
+end;
+
+procedure modificar(var a:arch);
+var
+	aux, n:novela;
+begin
+	reset(a);
+	leer(n);
+	while(n.cod <> tope)do begin 
+		read(a,aux);
+		if(n.cod = aux.cod)then
+			write(a,n);	
+	end;
+	close(a);
+end;
+
+procedure eliminar(var a:arch; deleted:integer);
+var
+	aux, n:novela;
+	P: integer;
+begin
+	reset(a);
+	while(not eof(a))do begin
+		read(a,n);
+		if(n.cod = deleted)then begin
+			P := filepos(a)*-1;//guardo la pos del que tengo que eliminar
+			aux.cod := 0;
+			aux.nom := '*******';//le pongo la marca de eliminado (no me acuerdo que otro comando era)
+			write(a, aux);
+			seek(a,0);//voy a la cabecera para modificar el campo
+			aux.cod := P;
+			write(a, aux);
+		end;
+	end;
+	close(a);	
+end;
+
+procedure Calcular(var a:arch);
+var
+	x:integer;
+	n:novela;
+	d:integer;
+begin
+	writeln('Ingrese 1 si desea agregar una nueva novela: ');
+	writeln('Ingrese 2 si desea modificar una novela: ');
+	writeln('Ingrese 3 si desea eliminar una novela: ');
+	readln(x);
+	if(x = 1)then begin
+		leer(n);
+		agregar(a, n);
+	end
+	else
+		if(x = 2)then begin
+			modificar(a);
+		end
+		else
+			if(x = 3)then begin
+				writeln('Ingrese el codigo de la novela a eliminar: ');
+				readln(d);
+				eliminar(a, d);
+			end
+			else
+				writeln('Que ganas de joder wacho');
+				
+	close(a);
+end;
+
+procedure Exportar(var a:arch; var t:text);
+var
+	n:novela;
+begin
+	reset(a);
+	reset(t);
+	while(not eof(a))do begin
+		read(a,n);
+		write(t, n.cod,'',n.gen,'',n.nom,'',n.dur,'',n.dir,'',n.precio);
+	end;
+	close(a);
+	close(t);		
+end;
+
 VAR
 	a:arch;
-
+	s:cadena;
+	t:text;
+	y:integer;
 BEGIN
+
 	repeat 
 		writeln('-> Ingrese 1 si quiere crear y cargar un archivo: ');
-		writeln('-> Ingrese 2 si quiere : ');
-		writeln('-> Ingrese 3 si quiere : ');
-		writeln('-> Ingrese 4 si quiere : ');
-		writeln('-> Ingrese 5 si quiere : ');
-		writeln('-> Ingrese 6 si quiere : ');
-		writeln('-> Ingrese 7 si quiere : ');
+		writeln('-> Ingrese 2 si quiere abir archivo para trabajar con el: ');
+		writeln('-> Ingrese 3 si quiere exportar el archivo a uno .txt con todo y novelas borradas: ');
 		writeln('Ingrese 0 si desea salir del programa: ');
 		readln(y);
 		
 		case y of
 			 1: begin
-					writeln('Ingrese : ');
-					readln();
-					writeln('Ingrese : ');
-					readln();
+					writeln('Ingrese el nombre del archivo que desea crear: ');
+					readln(s);
+					assign(a, s);
+					rewrite(a);
+					crearA(a);
 				end;	
 				
-			 2: ;
-			 
-			 3: ;
-			 
-			 4: ;
-			 
-			 5: ;
-			 
-			 6: ;
-			 
-			 7: ;			  	
+			 2: begin
+					Calcular(a);
+				end;
+			
+			 3: begin
+					assign(t, 'novelas.txt');
+					Exportar(a,t);
+				end	
 		else 
 			writeln('Ha ingresado el un valor equivocado');
 		end;
 			
 	until (y = 0);	
 END.
-
